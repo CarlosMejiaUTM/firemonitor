@@ -1,16 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './index.css';
-import { AuthProvider } from './context/AuthContext';
 import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext'; // <-- IMPORTA EL PROVIDER
+import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
+    <AuthProvider> {/* <-- AGREGA ESTA LÍNEA */}
+      <BrowserRouter basename="/firemonitor/">
         <App />
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
+      </BrowserRouter>
+    </AuthProvider>
+  </React.StrictMode>
 );

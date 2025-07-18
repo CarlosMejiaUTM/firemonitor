@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
-
 // Layouts
 import MainLayout from './components/layout/MainLayout';
 
@@ -29,8 +28,7 @@ function App() {
       {/* --- RUTAS PÚBLICAS --- */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* <-- Agrega esto */}
-
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* --- RUTAS PRIVADAS --- */}
       <Route element={<PrivateLayout />}>
@@ -38,18 +36,16 @@ function App() {
         <Route path="/mapa" element={<MapPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
-        
         {/* --- RUTAS DE GESTIÓN --- */}
         <Route path="/users/add" element={<RegisterPage isAdminMode={true} />} />
         <Route path="/nodes/manage" element={<NodeManagementPage />} />
         <Route path="/users/manage" element={<UserManagementPage />} />
-        
         {/* --- RUTA AÑADIDA --- */}
         <Route path="/nodes/create" element={<CreateNodePage />} />
       </Route>
 
       {/* Redirección por defecto */}
-      <Route path="/" element={<Navigate to="/dashboard" />} />
+      <Route path="/" element={<Navigate to="/login" />} />
     </Routes>
   );
 }
