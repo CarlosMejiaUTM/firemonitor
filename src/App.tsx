@@ -15,11 +15,23 @@ import ProfilePage from './pages/ProfilePage';
 import NodeManagementPage from './pages/NodeManagementPage';
 import UserManagementPage from './pages/UserManagementPage';
 import AssignNodePage from './pages/AssignNodePage';
-import CreateNodePage from './pages/CreateNodePage'; // <-- Importar la nueva página
+import CreateNodePage from './pages/CreateNodePage';
 
 function PrivateLayout() {
-  const auth = useAuth();
-  return auth.isAuthenticated ? <MainLayout /> : <Navigate to="/login" />;
+  const { isAuthenticated, isLoading } = useAuth(); // <--- Obtén isLoading
+
+  if (isLoading) {
+    // Mientras se verifica el token, muestra un mensaje o un spinner
+    return <div>Cargando...</div>;
+  }
+
+  if (!isAuthenticated) {
+    // Si ya no está cargando y no está autenticado, redirige
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Si todo está correcto, muestra el layout principal con las páginas anidadas
+  return <MainLayout />;
 }
 
 function App() {
@@ -34,18 +46,17 @@ function App() {
       <Route element={<PrivateLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/mapa" element={<MapPage />} />
-        <Route path="/alertas" element={<AlertsPage />} />
+        <Route path="/alertas"element={<AlertsPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
         {/* --- RUTAS DE GESTIÓN --- */}
         <Route path="/users/add" element={<RegisterPage isAdminMode={true} />} />
         <Route path="/nodes/manage" element={<NodeManagementPage />} />
         <Route path="/users/manage" element={<UserManagementPage />} />
-        {/* --- RUTA AÑADIDA --- */}
         <Route path="/nodes/create" element={<CreateNodePage />} />
       </Route>
 
       {/* Redirección por defecto */}
-      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/" element={<Navigate to="/dashboard" />} /> {/* Mejorado para redirigir al dashboard si ya está logueado */}
     </Routes>
   );
 }

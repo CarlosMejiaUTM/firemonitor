@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import io, { Socket } from 'socket.io-client';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
@@ -54,39 +54,48 @@ export function useFireMonitor() {
   const [liveAlerts, setLiveAlerts] = useState<Alert[]>([]);
   const [chartHistory, setChartHistory] = useState<HistoryReading[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const refreshNodes = useCallback(async () => {
+    try {
+      const response = await api.get('/nodes');
+      const fetchedNodes: Node[] = response.data;
+
+      setNodes(fetchedNodes);
+
+      // Si no hay nodo seleccionado, selecciona el primero automáticamente
+      if (fetchedNodes.length > 0 && !selectedNodeId) {
+        setSelectedNodeId(fetchedNodes[0].id);
+      }
+    } catch (error) {
+      console.error("❌ Error al refrescar los nodos:", error);
+    }
+  }, [selectedNodeId]);
 
   useEffect(() => {
-    async function fetchInitialNodes() {
+    async function fetchInitialData() {
+      setIsLoading(true);
       try {
-        const response = await api.get('/nodes');
-        const initialNodes: Node[] = response.data;
-        setNodes(initialNodes);
-        if (initialNodes.length > 0 && !selectedNodeId) {
-          setSelectedNodeId(initialNodes[0].id);
+        await refreshNodes();
+
+        if (user?.role === 'admin') {
+          const usersResponse = await api.get('/users');
+          setUsers(usersResponse.data || []);
         }
       } catch (error) {
-        console.error("Error al cargar nodos iniciales:", error);
+        console.error("❌ Error en la carga de datos iniciales:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
 
-    async function fetchUsers() {
-      if (user?.role === 'admin') {
-        try {
-          const response = await api.get('/users');
-          setUsers(response.data || []);
-        } catch (error) {
-          console.error("Error al cargar la lista de usuarios:", error);
-        }
-      }
-    }
-
-    fetchInitialNodes();
-    fetchUsers();
+    fetchInitialData();
 
     const socket: Socket = io(import.meta.env.VITE_API_URL);
+
     socket.on('connect', () => setIsConnected(true));
     socket.on('nodeUpdate', (updatedNode: Node) => {
-      setNodes(prevNodes => 
+      setNodes(prevNodes =>
         prevNodes.map(node => node.id === updatedNode.id ? updatedNode : node)
       );
     });
@@ -98,7 +107,7 @@ export function useFireMonitor() {
     return () => {
       socket.disconnect();
     };
-  }, [user]);
+  }, [user, refreshNodes]);
 
   useEffect(() => {
     if (!selectedNodeId) return;
@@ -107,13 +116,18 @@ export function useFireMonitor() {
       try {
         const response = await api.get(`/nodes/${selectedNodeId}/history`);
         const history = response.data;
+
         const formattedHistory = history.map((reading: any) => ({
-          time: new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: new Date(reading.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
           temperatura: reading.temperatura,
         }));
+
         setChartHistory(formattedHistory);
       } catch (error) {
-        console.error("Error al cargar el historial del nodo:", error);
+        console.error("❌ Error al cargar historial del nodo:", error);
       }
     }
 
@@ -121,6 +135,17 @@ export function useFireMonitor() {
   }, [selectedNodeId]);
 
   const selectedNodeData = nodes.find(node => node.id === selectedNodeId) || null;
+
+  // 👇 DEBUG opcional para desarrollo
+  useEffect(() => {
+    console.log({
+      isLoading,
+      nodes,
+      selectedNodeId,
+      selectedNodeData,
+      liveAlerts
+    });
+  }, [isLoading, nodes, selectedNodeId, selectedNodeData, liveAlerts]);
 
   return {
     nodes,
@@ -131,6 +156,8 @@ export function useFireMonitor() {
     liveAlerts,
     chartHistory,
     isConnected,
+    isLoading,
     handleSelectNode: setSelectedNodeId,
+    refreshNodes,
   };
 }

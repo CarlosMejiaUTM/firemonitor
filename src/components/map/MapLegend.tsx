@@ -1,28 +1,32 @@
 // src/components/map/MapLegend.tsx
+import React from 'react';
+
+const LegendItem = ({ children, label }: { children: React.ReactNode, label: string }) => (
+  <div className="flex items-center gap-3">
+    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+      {children}
+    </div>
+    <span className="text-sm text-gray-600">{label}</span>
+  </div>
+);
 
 export default function MapLegend() {
   return (
-    <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Leyenda</h2>
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-full bg-green-500 border-2 border-green-700"></div>
-          <span className="text-sm">Nodo Activo</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-full bg-gray-400 border-2 border-gray-600"></div>
-          <span className="text-sm">Nodo Inactivo</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-xs">!</div>
-          <span className="text-sm">Alerta de Fuego</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-full bg-orange-400 flex items-center justify-center text-white">
-            <span className="text-xs">🌡</span>
+    <div>
+      <h3 className="text-base font-bold text-gray-700 mb-3">Leyenda</h3>
+      <div className="space-y-3">
+        <LegendItem label="Nodo en Alerta">
+          <div className="relative w-full h-full flex items-center justify-center">
+            <div className="w-7 h-7 bg-red-500/50 rounded-full animate-ping"></div>
+            <div className="absolute w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-md"></div>
           </div>
-          <span className="text-sm">Alerta de Temperatura</span>
-        </div>
+        </LegendItem>
+        <LegendItem label="Nodo Activo">
+          <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md"></div>
+        </LegendItem>
+        <LegendItem label="Nodo Inactivo">
+          <div className="w-4 h-4 bg-gray-500 rounded-full border-2 border-white shadow-md"></div>
+        </LegendItem>
       </div>
     </div>
   );

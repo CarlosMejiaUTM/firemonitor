@@ -1,26 +1,77 @@
-// Icono de Alerta (puedes usar una librería como react-icons o un SVG)
-const AlertIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-4" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
-    </svg>
-);
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FiAlertTriangle, FiX } from 'react-icons/fi';
 
+// Asumo que el tipo ApiAlert está disponible o importado
+type ApiAlert = {
+  tipo: string;
+  severidad: 'Critica' | 'Alta' | 'Media' | 'Baja';
+  // ...otros campos
+};
 
-function AlertBanner() {
+// Se añaden los props para hacerlo dinámico y funcional
+interface AlertBannerProps {
+  alerts: ApiAlert[];
+  onDismiss: () => void;
+}
+
+export default function AlertBanner({ alerts, onDismiss }: AlertBannerProps) {
+  const navigate = useNavigate();
+
+  // Filtramos para obtener solo las alertas de alta prioridad
+  const highPriorityAlerts = alerts.filter(
+    a => a.severidad === 'Critica' || a.severidad === 'Alta'
+  );
+
+  if (highPriorityAlerts.length === 0) {
+    return null; // No mostrar nada si no hay alertas críticas
+  }
+
+  const alertCount = highPriorityAlerts.length;
+  const title = alertCount === 1 
+    ? `¡ALERTA! ${highPriorityAlerts[0].tipo}`
+    : `¡${alertCount} Alertas Críticas Detectadas!`;
+  
+  const subtitle = alertCount === 1
+    ? 'Se requiere atención inmediata. Revisa los detalles.'
+    : `Se han detectado ${alertCount} eventos importantes.`;
+
+  const handleNavigate = () => {
+    navigate('/alerts'); // Navega a la página de historial de alertas
+  };
+
   return (
-    <div className="bg-red-600 text-white p-4 rounded-lg flex items-center justify-between shadow-lg">
+    // MEJORA: El layout se apila en móvil y se expande en desktop.
+    <div className="bg-red-600 text-white p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
       <div className="flex items-center">
-        <AlertIcon />
+        {/* MEJORA: Icono con animación de pulso para atraer la atención. */}
+        <div className="relative mr-4">
+          <FiAlertTriangle className="h-8 w-8 animate-pulse" />
+        </div>
         <div>
-          <h3 className="font-bold">¡ALERTA! Fuego detectado</h3>
-          <p className="text-sm">Se ha detectado fuego en tu nodo. Revisa los detalles.</p>
+          <h3 className="font-bold text-lg">{title}</h3>
+          <p className="text-sm text-red-100">{subtitle}</p>
         </div>
       </div>
-      <button className="bg-white text-red-600 font-bold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors">
-        Ver detalles
-      </button>
+      
+      <div className="flex items-center gap-4 self-end sm:self-center">
+        {/* MEJORA: Botón funcional que redirige al usuario. */}
+        <button 
+          onClick={handleNavigate}
+          className="bg-white text-red-600 font-bold py-2 px-4 rounded-md hover:bg-red-100 transition-colors text-sm"
+        >
+          Ver Alertas
+        </button>
+
+        {/* MEJORA: Botón para cerrar/descartar el banner. */}
+        <button 
+          onClick={onDismiss}
+          className="text-red-200 hover:text-white transition-colors"
+          aria-label="Cerrar alerta"
+        >
+          <FiX size={24} />
+        </button>
+      </div>
     </div>
   );
 }
-
-export default AlertBanner;

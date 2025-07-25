@@ -1,3 +1,5 @@
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -13,31 +15,46 @@ export default function Pagination({
   onPageChange,
   limit = 10
 }: PaginationProps) {
+  // No se muestra nada si no hay resultados, lo cual es correcto.
   if (totalResults === 0) return null;
 
   const startResult = (currentPage - 1) * limit + 1;
   const endResult = Math.min(currentPage * limit, totalResults);
 
   return (
-    <div className="py-4 flex items-center justify-between">
-      <p className="text-sm text-gray-700">
-        Mostrando <span className="font-medium">{startResult}</span> a <span className="font-medium">{endResult}</span> de <span className="font-medium">{totalResults}</span> resultados
-      </p>
-      <div className="flex items-center gap-1">
+    // MEJORA: El layout se apila en móvil (flex-col) y se expande en desktop (sm:flex-row).
+    <div className="py-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Información de resultados */}
+      <div>
+        <p className="text-sm text-gray-700">
+          Mostrando <span className="font-medium text-gray-900">{startResult}</span> a <span className="font-medium text-gray-900">{endResult}</span> de <span className="font-medium text-gray-900">{totalResults}</span> resultados
+        </p>
+      </div>
+
+      {/* Controles de Navegación */}
+      <div className="flex items-center gap-2">
+        {/* MEJORA: Botón con icono, borde y mejores estilos de estado. */}
         <button 
           onClick={() => onPageChange(currentPage - 1)} 
           disabled={currentPage === 1}
-          className="px-3 py-1 rounded-md text-gray-500 hover:bg-gray-200 disabled:opacity-50"
+          className="flex items-center justify-center h-9 w-9 rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Página anterior"
         >
-          {"<"}
+          <FiChevronLeft size={20} />
         </button>
-        <span className="px-3 py-1 text-sm">Página {currentPage} de {totalPages}</span>
+        
+        <span className="px-3 py-1 text-sm text-gray-700">
+          Página <span className="font-bold">{currentPage}</span> de <span className="font-bold">{totalPages}</span>
+        </span>
+
+        {/* MEJORA: Botón con icono, borde y mejores estilos de estado. */}
         <button 
           onClick={() => onPageChange(currentPage + 1)} 
           disabled={currentPage === totalPages}
-          className="px-3 py-1 rounded-md text-gray-500 hover:bg-gray-200 disabled:opacity-50"
+          className="flex items-center justify-center h-9 w-9 rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Página siguiente"
         >
-          {">"}
+          <FiChevronRight size={20} />
         </button>
       </div>
     </div>
