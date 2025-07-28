@@ -1,37 +1,87 @@
+import React, { useState } from 'react';
 import { useFireMonitor } from '../hooks/useFireMonitor';
 import api from '../api/api';
 import UserManagementListItem from '../components/management/UserManagementListItem';
+// CORRECCIÓN FINAL: Se vuelve a la importación por defecto.
+import EditUserModal from '../components/management/EditUserModal'; 
 
-export default function UserManagementPage() {
-  // Obtenemos todos los usuarios y todos los nodos del hook
-  const { users, nodes } = useFireMonitor();
+// 1. Definir las interfaces para los datos
+interface User {
+  id: string;
+  nombre: string;
+  apellido: string;
+  usuario: string;
+  correo: string;
+  role: 'admin' | 'user';
+}
 
-  const handleEditUser = (user) => {
-    // Lógica para abrir un modal de edición
-    alert(`Funcionalidad de editar para '${user.usuario}' no implementada.`);
+interface Node {
+  id: string;
+  userId: string;
+  // Añade otros campos del nodo que necesites
+}
+
+const UserManagementPage: React.FC = () => {
+  // Asumimos que el hook devuelve los datos ya tipados. Si no, hacemos un cast.
+  const { users, nodes, refreshData } = useFireMonitor() as { users: User[], nodes: Node[], refreshData?: () => void };
+
+  // 2. Tipar los estados para el modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // 3. Tipar las funciones
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setIsEditModalOpen(true);
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar este usuario? Esta acción es irreversible.")) {
-      alert(`Funcionalidad de eliminar para el usuario ${userId} no implementada.`);
-      // En una implementación real, aquí iría la llamada a la API:
-      // try {
-      //   await api.delete(`/users/${userId}`);
-      //   alert('Usuario eliminado exitosamente.');
-      //   // Aquí se necesitaría una función para refrescar la lista de usuarios en el hook
-      // } catch (error) {
-      //   alert('Error al eliminar el usuario.');
-      // }
+  const handleCloseModal = () => {
+    setIsEditModalOpen(false);
+    setEditingUser(null);
+  };
+
+  const handleSaveUser = async (updatedUser: User) => {
+    setIsSaving(true);
+    try {
+      const payload = {
+        nombre: updatedUser.nombre,
+        apellido: updatedUser.apellido,
+        role: updatedUser.role,
+      };
+      await api.patch(`/users/${updatedUser.id}`, payload);
+      alert('Usuario actualizado exitosamente.');
+      
+      if (refreshData) refreshData();
+      
+      handleCloseModal();
+    } catch (error: any) {
+      console.error('Error al actualizar el usuario:', error);
+      alert('Error al actualizar el usuario: ' + (error.response?.data?.message || ''));
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleSendRecovery = async (email) => {
-    if (window.confirm(`¿Enviar correo de recuperación de contraseña a ${email}?`)) {
+  const handleDeleteUser = async (userId: string) => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar este usuario?")) {
       try {
-        // La API debe tener un endpoint para esto, por ejemplo /auth/forgot-password
-        await api.post('/auth/forgot-password', { correo: email });        alert('Correo de recuperación enviado exitosamente.');
+        await api.delete(`/users/${userId}`);
+        alert('Usuario eliminado exitosamente.');
+        if (refreshData) refreshData();
       } catch (error) {
-        console.error('Error al enviar correo de recuperación:', error);
+        alert('Error al eliminar el usuario.');
+      }
+    }
+  };
+
+  const handleSendRecovery = async (email: string) => {
+    if (window.confirm(`¿Enviar correo de recuperación a ${email}?`)) {
+      try {
+        await api.post('/auth/forgot-password', { correo: email });
+        alert('Correo de recuperación enviado.');
+      } catch (error) {
+        console.error('Error al enviar correo:', error);
         alert('Error al enviar el correo de recuperación.');
       }
     }
@@ -47,10 +97,7 @@ export default function UserManagementPage() {
       <div className="space-y-3">
         {users.length > 0 ? (
           users.map(user => {
-            // Para cada usuario, filtramos la lista completa de nodos
-            // para encontrar los que le pertenecen.
             const assignedNodes = nodes.filter(node => node.userId === user.id);
-            
             return (
               <UserManagementListItem 
                 key={user.id}
@@ -63,9 +110,21 @@ export default function UserManagementPage() {
             );
           })
         ) : (
-          <p className="p-8 text-center text-gray-500 bg-white rounded-lg shadow-md">No hay usuarios registrados en el sistema.</p>
+          <p className="p-8 text-center text-gray-500 bg-white rounded-lg shadow-md">No hay usuarios registrados.</p>
         )}
       </div>
+
+      {/* 4. Renderizar el modal solo si hay un usuario para editar */}
+      {editingUser && (
+        <EditUserModal 
+          user={editingUser}
+          onSave={handleSaveUser}
+          onClose={handleCloseModal}
+          isSaving={isSaving}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default UserManagementPage;
